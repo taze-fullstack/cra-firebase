@@ -1,13 +1,16 @@
 import React, {useState, useEffect} from 'react';
 
-import firebase from '../firebase';
-
 import searchYoutube from 'youtube-api-v3-search';
+
+import firebase from '../firebase';
+import '../style.scss';
 
 const App = () => {
   const [name, setName] = useState('');
   const [color, setColor] = useState('');
   const [items, setItems] = useState();
+  const [videoQuery, setVideoQuery] = useState('');
+  const [videoResults, setVideoResults] = useState();
 
   useEffect(
     () => {
@@ -43,10 +46,11 @@ const App = () => {
       searchYoutube(
         'AIzaSyAlw5mGkush_MCe_0EvYroPUW9y5O5W_sk',
         {
-          q: 'dogs',
-          part: 'snppet',
+          q: 'latest music video',
+          part: 'snippet',
           type: 'video',
-          maxResults: '30',
+          maxResults: '18',
+          videoCategoryId: '10',
         },
         resultsCallback
       );
@@ -61,6 +65,7 @@ const App = () => {
       console.log(error);
     } else {
       console.log(result);
+      setVideoResults(result.items);
     }
   };
 
@@ -90,12 +95,41 @@ const App = () => {
     itemRef.remove();
   };
 
+  const handleVideoQuery = (e) => {
+    setVideoQuery(e.currentTarget.value);
+  };
+
+  const handleVideoQuerySubmit = (e) => {
+    e.preventDefault();
+
+    searchYoutube(
+      'AIzaSyAlw5mGkush_MCe_0EvYroPUW9y5O5W_sk',
+      {
+        q: videoQuery,
+        part: 'snippet',
+        type: 'video',
+        maxResults: '18',
+        videoCategoryId: '10',
+      },
+      resultsCallback
+    );
+  };
+
   return (
     <div className="App">
       <header className="App-header">
         <p>Hello World</p>
       </header>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleVideoQuerySubmit}>
+        <input
+          name="query"
+          placeholder="search"
+          value={videoQuery}
+          onChange={handleVideoQuery}
+        />
+        <button type="submit">Search</button>
+      </form>
+      {/* <form onSubmit={handleSubmit}>
         <input
           name="name"
           placeholder="Name"
@@ -109,10 +143,32 @@ const App = () => {
           onChange={handleColor}
         />
         <button type="submit">Add Item</button>
-      </form>
+      </form> */}
 
       <div>
-        {items !== undefined ? (
+        {videoResults !== undefined ? (
+          videoResults.length > 0 ? (
+            <div style={{display: 'flex'}}>
+              {videoResults.map((vid) => {
+                const {snippet, id} = vid;
+                const {title, channelTitle, thumbnails} = snippet;
+
+                return (
+                  <div key={id.videoId}>
+                    <img src={thumbnails.medium.url} alt="" />
+                    <p>{title}</p>
+                    <p>{channelTitle}</p>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div>No results</div>
+          )
+        ) : (
+          <div>Fetching...</div>
+        )}
+        {/* {items !== undefined ? (
           items.length > 0 ? (
             items.map((item) => {
               return (
@@ -137,7 +193,7 @@ const App = () => {
           )
         ) : (
           <div>Loading...</div>
-        )}
+        )} */}
       </div>
     </div>
   );
