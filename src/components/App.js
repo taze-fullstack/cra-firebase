@@ -2,6 +2,8 @@ import React, {useState, useEffect} from 'react';
 
 import firebase from '../firebase';
 
+import searchYoutube from 'youtube-api-v3-search';
+
 const App = () => {
   const [name, setName] = useState('');
   const [color, setColor] = useState('');
@@ -23,11 +25,44 @@ const App = () => {
         }
         setItems(newState);
       });
+
+      async function yt() {
+        let result = await searchYoutube(
+          'AIzaSyAlw5mGkush_MCe_0EvYroPUW9y5O5W_sk',
+          {
+            q: 'dogs',
+            part: 'snippet',
+            type: 'video',
+          }
+        );
+
+        console.log(result);
+      }
+
+      // yt();
+      searchYoutube(
+        'AIzaSyAlw5mGkush_MCe_0EvYroPUW9y5O5W_sk',
+        {
+          q: 'dogs',
+          part: 'snppet',
+          type: 'video',
+          maxResults: '30',
+        },
+        resultsCallback
+      );
     },
     [
       /* Trigger once */
     ]
   );
+
+  const resultsCallback = (error, result) => {
+    if (error) {
+      console.log(error);
+    } else {
+      console.log(result);
+    }
+  };
 
   const handleName = (e) => {
     setName(e.currentTarget.value);
@@ -59,50 +94,51 @@ const App = () => {
     <div className="App">
       <header className="App-header">
         <p>Hello World</p>
-        <form onSubmit={handleSubmit}>
-          <input
-            name="name"
-            placeholder="Name"
-            value={name}
-            onChange={handleName}
-          />
-          <input
-            name="color"
-            placeholder="Favorite Color"
-            value={color}
-            onChange={handleColor}
-          />
-          <button type="submit">Add Item</button>
-        </form>
-        <div>
-          {items !== undefined ? (
-            items.length > 0 ? (
-              items.map((item) => {
-                return (
-                  <div key={item.id}>
-                    <div>
-                      <p>
-                        {item.name} || {item.color}
-                      </p>
-                      <button
-                        onClick={() => {
-                          removeItem(item.id);
-                        }}
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div>No items</div>
-            )
-          ) : (
-            <div>Loading...</div>
-          )}
-        </div>
       </header>
+      <form onSubmit={handleSubmit}>
+        <input
+          name="name"
+          placeholder="Name"
+          value={name}
+          onChange={handleName}
+        />
+        <input
+          name="color"
+          placeholder="Favorite Color"
+          value={color}
+          onChange={handleColor}
+        />
+        <button type="submit">Add Item</button>
+      </form>
+
+      <div>
+        {items !== undefined ? (
+          items.length > 0 ? (
+            items.map((item) => {
+              return (
+                <div key={item.id}>
+                  <div>
+                    <p>
+                      {item.name} || {item.color}
+                    </p>
+                    <button
+                      onClick={() => {
+                        removeItem(item.id);
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div>No items</div>
+          )
+        ) : (
+          <div>Loading...</div>
+        )}
+      </div>
     </div>
   );
 };

@@ -11297,3 +11297,10 @@ yargs@^3.10.0:
     string-width "^1.0.1"
     window-size "^0.1.4"
     y18n "^3.2.0"
+
+youtube-api-v3-search@^1.2.1:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/youtube-api-v3-search/-/youtube-api-v3-search-1.2.1.tgz#b7b2840d705026812c292ee40df4e9e6b558f662"
+  integrity sha512-CsH8oqX6wZ1b82Xdd4hddx3fSHEIaU85gdYGfQXNbaHOXq5GbaHs7Pro0mEnDt5WzQ5r0eI10gqGeM2mJolJDg==
+  dependencies:
+    browser-resolve "^1.11.3"
