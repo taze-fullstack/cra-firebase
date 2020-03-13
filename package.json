@@ -1,6 +1,6 @@
 {
-  "homepage": "https://taze-fullstack.github.io/firebase/",
-  "name": "firebase",
+  "homepage": "https://taze-fullstack.github.io/cra-firebase/",
+  "name": "cra-firebase",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
