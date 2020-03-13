@@ -1,0 +1,2 @@
+html{min-height:100vh;max-height:100vh}body{margin:0;background:#eee}.app,body{height:100vh}.index{display:flex;height:100%}.video-results{display:flex;flex-wrap:wrap}.video{width:320px;outline:5px solid red}.pane-search{flex-grow:1;height:100%;overflow:auto;outline:5px solid #00f}.pane-list{flex-shrink:0;width:520px;height:100%;outline:5px solid red}
+/*# sourceMappingURL=main.dc028211.chunk.css.map */
