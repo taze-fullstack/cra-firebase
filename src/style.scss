@@ -11,8 +11,12 @@ body {
 }
 
 .app {
-  display: flex;
   height: 100vh;
+}
+
+.index {
+  display: flex;
+  height: 100%;
 }
 
 .video-results {
@@ -29,6 +33,8 @@ body {
 .pane-search {
   flex-grow: 1;
   height: 100%;
+  overflow: auto;
+
   outline: 5px blue solid;
 }
 
