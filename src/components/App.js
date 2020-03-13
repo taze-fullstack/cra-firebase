@@ -1,97 +1,58 @@
 import React, {useState, useEffect} from 'react';
 
-import searchYoutube from 'youtube-api-v3-search';
+import {searchYoutube} from './youtube';
 
 import firebase from '../firebase';
 import '../style.scss';
 
 const App = () => {
-  const [name, setName] = useState('');
-  const [color, setColor] = useState('');
-  const [items, setItems] = useState();
+  const [user, setUser] = useState();
   const [videoQuery, setVideoQuery] = useState('');
   const [videoResults, setVideoResults] = useState();
+  const [q, setQ] = useState();
 
   useEffect(
     () => {
-      const itemsRef = firebase.database().ref('items');
+      firebase.auth().onAuthStateChanged((user) => {
+        if (user) {
+          console.log(user);
+          setUser(user);
 
-      itemsRef.on('value', (snapshot) => {
-        let items = snapshot.val();
-        let newState = [];
-        for (let item in items) {
-          newState.push({
-            id: item,
-            name: items[item].name,
-            color: items[item].color,
+          const qRef = firebase.database().ref('q');
+          qRef.on('value', (snap) => {
+            let items = snap.val();
+            let newState = [];
+            for (let item in items) {
+              newState.push({
+                id: item,
+                dj: items[item].dj,
+                video: items[item].video,
+              });
+            }
+            setQ(newState);
           });
+        } else {
+          setUser('');
         }
-        setItems(newState);
       });
-
-      async function yt() {
-        let result = await searchYoutube(
-          'AIzaSyAlw5mGkush_MCe_0EvYroPUW9y5O5W_sk',
-          {
-            q: 'dogs',
-            part: 'snippet',
-            type: 'video',
-          }
-        );
-
-        console.log(result);
-      }
-
-      // yt();
-      searchYoutube(
-        'AIzaSyAlw5mGkush_MCe_0EvYroPUW9y5O5W_sk',
-        {
-          q: 'latest music video',
-          part: 'snippet',
-          type: 'video',
-          maxResults: '18',
-          videoCategoryId: '10',
-        },
-        resultsCallback
-      );
     },
     [
       /* Trigger once */
     ]
   );
 
-  const resultsCallback = (error, result) => {
+  const videoResultsCallback = (error, result) => {
     if (error) {
+      alert('Error: please check console');
       console.log(error);
     } else {
       console.log(result);
-      setVideoResults(result.items);
+      setVideoResults(result);
     }
   };
 
-  const handleName = (e) => {
-    setName(e.currentTarget.value);
-  };
-
-  const handleColor = (e) => {
-    setColor(e.currentTarget.value);
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const itemsRef = firebase.database().ref('items');
-    const item = {
-      name: name,
-      color: color,
-    };
-
-    itemsRef.push(item);
-    setName('');
-    setColor('');
-  };
-
   const removeItem = (id) => {
-    const itemRef = firebase.database().ref(`/items/${id}`);
+    const itemRef = firebase.database().ref(`/q/${id}`);
     itemRef.remove();
   };
 
@@ -102,98 +63,153 @@ const App = () => {
   const handleVideoQuerySubmit = (e) => {
     e.preventDefault();
 
-    searchYoutube(
-      'AIzaSyAlw5mGkush_MCe_0EvYroPUW9y5O5W_sk',
-      {
-        q: videoQuery,
-        part: 'snippet',
-        type: 'video',
-        maxResults: '18',
-        videoCategoryId: '10',
+    searchYoutube(videoQuery, videoResultsCallback);
+  };
+
+  const handleSignIn = () => {
+    const provider = new firebase.auth.GoogleAuthProvider();
+
+    provider.setCustomParameters({
+      login_hint: 'user@fullstack.ph',
+    });
+
+    firebase
+      .auth()
+      .signInWithPopup(provider)
+      .then(function(result) {
+        // // This gives you a Google Access Token. You can use it to access the Google API.
+        // var token = result.credential.accessToken;
+        // // The signed-in user info.
+        // console.log(result);
+        // var user = result.user;
+        // // console.log(user);
+        // // ...
+      })
+      .catch(function(error) {
+        // // Handle Errors here.
+        // var errorCode = error.code;
+        // var errorMessage = error.message;
+        // // The email of the user's account used.
+        // var email = error.email;
+        // // The firebase.auth.AuthCredential type that was used.
+        // var credential = error.credential;
+        // // ...
+      });
+  };
+
+  const handleSignOut = () => {
+    firebase
+      .auth()
+      .signOut()
+      .then(function() {
+        // Sign-out successful.
+        setUser('');
+        setQ();
+      })
+      .catch(function(error) {
+        alert('error, check console log');
+        console.log(error);
+      });
+  };
+
+  const handleAddToQueue = (vid) => {
+    const qRef = firebase.database().ref('q');
+
+    const item = {
+      dj: {
+        name: user.displayName,
+        email: user.email,
       },
-      resultsCallback
-    );
+      video: {
+        videoId: vid.id.videoId,
+        title: vid.snippet.title,
+      },
+    };
+
+    qRef.push(item);
   };
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <p>Hello World</p>
-      </header>
-      <form onSubmit={handleVideoQuerySubmit}>
-        <input
-          name="query"
-          placeholder="search"
-          value={videoQuery}
-          onChange={handleVideoQuery}
-        />
-        <button type="submit">Search</button>
-      </form>
-      {/* <form onSubmit={handleSubmit}>
-        <input
-          name="name"
-          placeholder="Name"
-          value={name}
-          onChange={handleName}
-        />
-        <input
-          name="color"
-          placeholder="Favorite Color"
-          value={color}
-          onChange={handleColor}
-        />
-        <button type="submit">Add Item</button>
-      </form> */}
-
-      <div>
-        {videoResults !== undefined ? (
-          videoResults.length > 0 ? (
-            <div style={{display: 'flex'}}>
-              {videoResults.map((vid) => {
-                const {snippet, id} = vid;
-                const {title, channelTitle, thumbnails} = snippet;
-
-                return (
-                  <div key={id.videoId}>
-                    <img src={thumbnails.medium.url} alt="" />
-                    <p>{title}</p>
-                    <p>{channelTitle}</p>
-                  </div>
-                );
-              })}
-            </div>
+    <div className="app">
+      <div className="pane-search">
+        <header>
+          {user !== undefined ? (
+            user ? (
+              <div>
+                <p>Hello, {user.displayName.split(' ')[0]} :D</p>
+                <p>{user.email}</p>
+                <button onClick={handleSignOut}>Sign Out</button>
+              </div>
+            ) : (
+              <button onClick={handleSignIn}>Sign In</button>
+            )
           ) : (
-            <div>No results</div>
-          )
-        ) : (
-          <div>Fetching...</div>
-        )}
-        {/* {items !== undefined ? (
-          items.length > 0 ? (
-            items.map((item) => {
-              return (
-                <div key={item.id}>
-                  <div>
-                    <p>
-                      {item.name} || {item.color}
-                    </p>
-                    <button
-                      onClick={() => {
-                        removeItem(item.id);
-                      }}
-                    >
-                      Remove
-                    </button>
+            <></>
+          )}
+        </header>
+        {user !== undefined && user && (
+          <div>
+            <form onSubmit={handleVideoQuerySubmit}>
+              <input
+                name="query"
+                placeholder="search"
+                value={videoQuery}
+                onChange={handleVideoQuery}
+              />
+              <button type="submit">Search</button>
+            </form>
+            <div>
+              {videoResults !== undefined ? (
+                videoResults.length > 0 ? (
+                  <div className="video-results">
+                    {videoResults.map((vid) => {
+                      const {snippet, id} = vid;
+                      const {title, channelTitle, thumbnails} = snippet;
+
+                      return (
+                        <div key={id.videoId} className="video">
+                          <img src={thumbnails.medium.url} alt="" />
+                          <p>{title}</p>
+                          <p>{channelTitle}</p>
+                          <button onClick={() => handleAddToQueue(vid)}>
+                            q
+                          </button>
+                          <button>q next</button>
+                        </div>
+                      );
+                    })}
                   </div>
-                </div>
+                ) : (
+                  <div>No results</div>
+                )
+              ) : (
+                <div>Fetching...</div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+      <div className="pane-list">
+        <ul>
+          {q !== undefined ? (
+            q.map((item) => {
+              return (
+                <li key={item.id}>
+                  <span>{item.video.title}</span>
+                  <button
+                    onClick={() => {
+                      removeItem(item.id);
+                    }}
+                  >
+                    Remove
+                  </button>
+                </li>
               );
             })
           ) : (
-            <div>No items</div>
-          )
-        ) : (
-          <div>Loading...</div>
-        )} */}
+            <li>Fetching...</li>
+          )}
+        </ul>
       </div>
     </div>
   );
